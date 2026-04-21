@@ -4,7 +4,12 @@ Automated version-consistency check.
 Reads VERSION (the single source of truth) and verifies that every
 known file that embeds the product version string matches it.
 Run with:  python -m pytest tests/test_version_consistency.py
+
+Release gate (set FINCEPT_RELEASE=1 in CI):
+  test_updates_sha256_populated — fails if any sha256 hash in updates.json is
+  empty.  Must pass before cutting a release tag.
 """
+import os
 import re
 import pathlib
 
@@ -34,6 +39,34 @@ def test_updates_json_version():
         got = info["latest-version"]
         assert got == v, f"updates.json platform '{platform}' has version '{got}', expected '{v}'"
 
+def test_updates_sha256_populated():
+    """
+    Release gate: every platform entry in updates.json must have a non-empty
+    sha256 hash before the release is cut.
+
+    This test is enforced only when the FINCEPT_RELEASE environment variable
+    is set to '1' (e.g., in the GitHub Actions release workflow).  During
+    normal PR development the hashes are intentionally empty because build
+    artifacts do not exist yet.
+
+    To enable locally:  FINCEPT_RELEASE=1 python -m pytest tests/ -v
+    """
+    import json
+    if os.environ.get("FINCEPT_RELEASE") != "1":
+        import pytest
+        pytest.skip("sha256 gate is only enforced when FINCEPT_RELEASE=1")
+    data = json.loads((REPO / "updates.json").read_text())
+    missing = [
+        platform
+        for platform, info in data["updates"].items()
+        if not info.get("sha256", "").strip()
+    ]
+    assert not missing, (
+        f"updates.json has empty sha256 for platform(s): {missing}. "
+        "Populate the correct sha256 hashes before publishing this release — "
+        "the auto-updater skips integrity verification when the hash is absent."
+    )
+
 def test_setup_sh_version():
     v = canonical_version()
     text = (REPO / "setup.sh").read_text()
@@ -57,32 +90,38 @@ def test_no_stale_version_040x():
     m = re.match(r"(\d+)\.(\d+)\.(\d+)", v)
     assert m, f"Cannot parse canonical version '{v}'"
     major, minor, patch = int(m.group(1)), int(m.group(2)), int(m.group(3))
-    stale_patterns = [f"{major}.{minor}.{p}" for p in range(patch) if f"{major}.{minor}.{p}" != v]
+    stale_patterns = [
+        f"{major}.{minor}.{p}"
+        for p in range(patch)
+        if f"{major}.{minor}.{p}" != v
+    ]
 
-    stale = set()
-    # Escape the version specifier separator chars so they don't match in pip pins
+    if not stale_patterns:
+        return  # nothing to check (patch is 0)
+
+    # Build a single compiled alternation so each file is read exactly once.
+    stale_re = re.compile(
+        r"\b(" + "|".join(re.escape(s) for s in stale_patterns) + r")\b"
+    )
+    # Exclude lines that are pip-style version pins or changelog arrows
     pin_sep = re.compile(r"[><=!]+\s*\d+\.\d+\.\d+")
 
-    for pattern in stale_patterns:
-        for ext in ("*.cpp", "*.h", "*.md", "*.json", "*.sh"):
-            for p in REPO.rglob(ext):
-                # skip git internals
-                if ".git" in str(p):
-                    continue
-                try:
-                    text = p.read_text(errors="replace")
-                except Exception:
-                    continue
-                for lineno, line in enumerate(text.splitlines(), 1):
-                    if re.search(rf"\b{re.escape(pattern)}\b", line):
-                        # Exclude pip requirement pins like `>=4.0.0` or `==4.0.1`
-                        if pin_sep.search(line):
-                            continue
-                        # Exclude URLs with library releases
-                        if "pypi" in line.lower() or "pip" in line.lower():
-                            continue
-                        # Exclude changelog/audit entries recording version transitions
-                        if "\u2192" in line:
-                            continue
-                        stale.add(f"{p.relative_to(REPO)}:{lineno}: {line.strip()}")
+    stale = set()
+    for ext in ("*.cpp", "*.h", "*.md", "*.json", "*.sh"):
+        for p in REPO.rglob(ext):
+            if ".git" in str(p):
+                continue
+            try:
+                text = p.read_text(errors="replace")
+            except Exception:
+                continue
+            for lineno, line in enumerate(text.splitlines(), 1):
+                if stale_re.search(line):
+                    if pin_sep.search(line):
+                        continue
+                    if "pypi" in line.lower() or "pip" in line.lower():
+                        continue
+                    if "\u2192" in line:
+                        continue
+                    stale.add(f"{p.relative_to(REPO)}:{lineno}: {line.strip()}")
     assert not stale, "Stale version strings found:\n" + "\n".join(sorted(stale))

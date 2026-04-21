@@ -40,7 +40,15 @@ def test_optional_quant_file_exists():
 def test_core_is_smaller_than_full():
     core = _package_names(RES / "requirements-core.txt")
     full = _package_names(RES / "requirements-numpy2.txt")
-    assert len(core) < len(full), "Core requirements must be a strict subset of the full list"
+    extra = core - full
+    assert not extra, (
+        f"requirements-core.txt contains packages not present in requirements-numpy2.txt: "
+        f"{sorted(extra)}. Core must be a proper subset of the full requirements."
+    )
+    assert core != full, (
+        "requirements-core.txt is identical to requirements-numpy2.txt — "
+        "core must be a strict (proper) subset."
+    )
 
 
 def test_core_has_essential_packages():

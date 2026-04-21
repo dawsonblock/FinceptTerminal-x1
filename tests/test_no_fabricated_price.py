@@ -23,14 +23,22 @@ def test_no_magic_1000_fill():
     )
 
 def test_market_price_field_in_header():
-    header = (REPO / "fincept-qt" / "src" / "trading" / "UnifiedTrading.h").read_text()
-    assert "market_price" in header, (
-        "UnifiedOrder struct in UnifiedTrading.h must contain a 'market_price' field "
+    """market_price must be declared as a field inside the UnifiedOrder struct in TradingTypes.h."""
+    types_h = (REPO / "fincept-qt" / "src" / "trading" / "TradingTypes.h").read_text()
+    # Find the UnifiedOrder struct block and verify market_price appears inside it
+    struct_match = re.search(r"struct\s+UnifiedOrder\s*\{([^}]*)\}", types_h, re.DOTALL)
+    assert struct_match, "UnifiedOrder struct not found in TradingTypes.h"
+    struct_body = struct_match.group(1)
+    assert "market_price" in struct_body, (
+        "UnifiedOrder struct in TradingTypes.h must contain a 'market_price' field "
         "so callers can supply a real quote before paper-trading a market order."
     )
 
 def test_rejection_message_present():
+    """UnifiedTrading.cpp must contain the specific rejection string for missing market_price."""
     text = SOURCE.read_text()
-    assert "market_price must be supplied" in text or "market_price" in text, (
-        "UnifiedTrading.cpp must contain an explicit rejection message when market_price is missing."
+    assert "market_price must be supplied" in text, (
+        "UnifiedTrading.cpp must contain the explicit rejection message "
+        "'market_price must be supplied' when market_price is missing. "
+        "Found only partial or no matching text — the no-fabrication contract is not enforced."
     )
