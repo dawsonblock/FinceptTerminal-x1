@@ -82,6 +82,9 @@ void KalshiWsClient::disconnect() {
 }
 
 void KalshiWsClient::ensure_connected() {
+    LOG_WARN("KalshiWsClient",
+             "[EXPERIMENTAL] Kalshi WebSocket live connection is not yet implemented. "
+             "This is a stub scheduled for a future phase. Kalshi data is unavailable.");
     // Phase 4 keeps this a stub that logs what *would* happen. Phase 7
     // wires in the RSA-PSS signing via the Python bridge and flips the
     // ws_->connect_to() call live. The connect needs KALSHI-ACCESS-KEY /

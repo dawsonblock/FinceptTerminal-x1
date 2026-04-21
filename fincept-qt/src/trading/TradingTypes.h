@@ -179,6 +179,7 @@ struct UnifiedOrder {
     OrderType order_type = OrderType::Market;
     double quantity = 0;
     double price = 0;
+    double market_price = 0.0;
     double stop_price = 0;
     ProductType product_type = ProductType::Intraday;
     QString validity = "DAY";
