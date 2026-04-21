@@ -976,35 +976,35 @@ ApiResponse<QVector<BrokerAuction>> AlpacaBroker::get_historical_auctions_single
         return {false, "", "", "", "Use OAuth flow"};                                                                  \
     }                                                                                                                  \
     OrderPlaceResponse CLASS::place_order(const BrokerCredentials&, const UnifiedOrder&) {                             \
-        return {false, "", "TODO"};                                                                                    \
+        return {false, "", #CLASS ": order placement not implemented in this release"};                                 \
     }                                                                                                                  \
     ApiResponse<QJsonObject> CLASS::modify_order(const BrokerCredentials&, const QString&, const QJsonObject&) {       \
-        return {false, std::nullopt, "TODO", now_ts()};                                                                \
+        return {false, std::nullopt, #CLASS ": modify_order not implemented in this release", now_ts()};               \
     }                                                                                                                  \
     ApiResponse<QJsonObject> CLASS::cancel_order(const BrokerCredentials&, const QString&) {                           \
-        return {false, std::nullopt, "TODO", now_ts()};                                                                \
+        return {false, std::nullopt, #CLASS ": cancel_order not implemented in this release", now_ts()};               \
     }                                                                                                                  \
     ApiResponse<QVector<BrokerOrderInfo>> CLASS::get_orders(const BrokerCredentials&) {                                \
-        return {false, std::nullopt, "TODO", now_ts()};                                                                \
+        return {false, std::nullopt, #CLASS ": get_orders not implemented in this release", now_ts()};                 \
     }                                                                                                                  \
     ApiResponse<QJsonObject> CLASS::get_trade_book(const BrokerCredentials&) {                                         \
-        return {false, std::nullopt, "TODO", now_ts()};                                                                \
+        return {false, std::nullopt, #CLASS ": get_trade_book not implemented in this release", now_ts()};             \
     }                                                                                                                  \
     ApiResponse<QVector<BrokerPosition>> CLASS::get_positions(const BrokerCredentials&) {                              \
-        return {false, std::nullopt, "TODO", now_ts()};                                                                \
+        return {false, std::nullopt, #CLASS ": get_positions not implemented in this release", now_ts()};              \
     }                                                                                                                  \
     ApiResponse<QVector<BrokerHolding>> CLASS::get_holdings(const BrokerCredentials&) {                                \
-        return {false, std::nullopt, "TODO", now_ts()};                                                                \
+        return {false, std::nullopt, #CLASS ": get_holdings not implemented in this release", now_ts()};               \
     }                                                                                                                  \
     ApiResponse<BrokerFunds> CLASS::get_funds(const BrokerCredentials&) {                                              \
-        return {false, std::nullopt, "TODO", now_ts()};                                                                \
+        return {false, std::nullopt, #CLASS ": get_funds not implemented in this release", now_ts()};                  \
     }                                                                                                                  \
     ApiResponse<QVector<BrokerQuote>> CLASS::get_quotes(const BrokerCredentials&, const QVector<QString>&) {           \
-        return {false, std::nullopt, "TODO", now_ts()};                                                                \
+        return {false, std::nullopt, #CLASS ": get_quotes not implemented in this release", now_ts()};                 \
     }                                                                                                                  \
     ApiResponse<QVector<BrokerCandle>> CLASS::get_history(const BrokerCredentials&, const QString&, const QString&,    \
                                                           const QString&, const QString&) {                            \
-        return {false, std::nullopt, "TODO", now_ts()};                                                                \
+        return {false, std::nullopt, #CLASS ": get_history not implemented in this release", now_ts()};                \
     }
 
 // ── IBKR ──

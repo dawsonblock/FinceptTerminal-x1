@@ -109,7 +109,8 @@ Result<void> SecureStorage::store(const QString& key, const QString& value) {
 #else
     // Linux — XOR-obfuscated QSettings.
     // WARNING: Not cryptographically secure. Prevents casual inspection only.
-    // TODO: Add libsecret backend for proper encryption on Linux.
+    // KNOWN LIMITATION (Linux): libsecret backend for proper OS keychain integration
+    // is not yet implemented. Credentials are XOR-obfuscated in QSettings only.
     QSettings s("Fincept", "FinceptTerminal-Secure");
     const QByteArray obfuscated = xor_obfuscate(value.toUtf8()).toBase64();
     s.setValue("secure/" + key, QString::fromLatin1(obfuscated));

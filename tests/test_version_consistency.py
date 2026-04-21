@@ -52,24 +52,31 @@ def test_main_cpp_version():
 def test_no_stale_version_040x():
     """No C++ source or core doc file should contain a different 4.0.x version."""
     v = canonical_version()
+    # Parse major/minor to derive which patch versions count as stale.
+    # Stale = any 4.0.N where N < current patch number.
+    m = re.match(r"(\d+)\.(\d+)\.(\d+)", v)
+    assert m, f"Cannot parse canonical version '{v}'"
+    major, minor, patch = int(m.group(1)), int(m.group(2)), int(m.group(3))
+    stale_patterns = [f"{major}.{minor}.{p}" for p in range(patch) if f"{major}.{minor}.{p}" != v]
+
     stale = set()
-    for pattern in ("4.0.0", "4.0.1"):
-        if pattern == v:
-            continue
+    # Escape the version specifier separator chars so they don't match in pip pins
+    pin_sep = re.compile(r"[><=!]+\s*\d+\.\d+\.\d+")
+
+    for pattern in stale_patterns:
         for ext in ("*.cpp", "*.h", "*.md", "*.json", "*.sh"):
             for p in REPO.rglob(ext):
-                # skip git internals and Python library version pins
+                # skip git internals
                 if ".git" in str(p):
                     continue
                 try:
                     text = p.read_text(errors="replace")
                 except Exception:
                     continue
-                # Skip lines that are clearly library version pins (pip requirements)
                 for lineno, line in enumerate(text.splitlines(), 1):
                     if re.search(rf"\b{re.escape(pattern)}\b", line):
-                        # Exclude pip requirement pins like `>=4.0.0` or `==4.0.2`
-                        if re.search(r"[><=!]+\s*4\.0\.[012]", line):
+                        # Exclude pip requirement pins like `>=4.0.0` or `==4.0.1`
+                        if pin_sep.search(line):
                             continue
                         # Exclude URLs with library releases
                         if "pypi" in line.lower() or "pip" in line.lower():
