@@ -1,7 +1,8 @@
 #pragma once
 // PythonEnvSection.h — Python venv package manager panel for SettingsScreen.
-// Shows all packages from requirements-numpy1.txt and requirements-numpy2.txt,
-// their installed versions, and allows install/upgrade via uv pip.
+// Shows all packages from requirements-core.txt (Core/Tier-1) and
+// requirements-optional-quant.txt (Quant/Tier-3), their installed versions,
+// and allows install/upgrade via uv pip.
 
 #include <QComboBox>
 #include <QLabel>

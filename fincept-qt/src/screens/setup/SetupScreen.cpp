@@ -402,10 +402,10 @@ void SetupScreen::on_progress(const python::SetupProgress& progress) {
     // Plain-English status line — strip internal technical messages
     QString msg = progress.message;
     // Replace internal step identifiers users don't need to see
-    msg.replace("venv-numpy1", "Trading workspace");
-    msg.replace("venv-numpy2", "Analytics workspace");
-    msg.replace("requirements-numpy1.txt", "trading library list");
-    msg.replace("requirements-numpy2.txt", "analytics library list");
+    msg.replace("venv-numpy1", "Quant workspace");
+    msg.replace("venv-numpy2", "Core workspace");
+    msg.replace("requirements-optional-quant.txt", "quant library list");
+    msg.replace("requirements-core.txt", "core library list");
     status_label_->setText(msg);
 }
 

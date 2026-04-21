@@ -42,3 +42,43 @@ def test_rejection_message_present():
         "'market_price must be supplied' when market_price is missing. "
         "Found only partial or no matching text — the no-fabrication contract is not enforced."
     )
+
+
+# ── CryptoTradingScreen paper-fill guard ─────────────────────────────────────
+
+CRYPTO_SOURCE = REPO / "fincept-qt" / "src" / "screens" / "crypto_trading" / "CryptoTradingScreen.cpp"
+
+
+def test_crypto_no_magic_1000_fallback():
+    """CryptoTradingScreen.cpp must not fabricate a fill price from 1000.0."""
+    text = CRYPTO_SOURCE.read_text()
+    fabrication = re.findall(r":\s*1000\.0", text)
+    assert not fabrication, (
+        f"Found {len(fabrication)} magic-constant ternary fallback(s) using 1000.0 in "
+        "CryptoTradingScreen.cpp. Paper fills must never invent a price."
+    )
+
+
+def test_crypto_no_value_or_fabrication():
+    """CryptoTradingScreen.cpp must not use value_or(1000.0) or any other magic fill constant."""
+    text = CRYPTO_SOURCE.read_text()
+    fabrication = re.findall(r"value_or\s*\(\s*1000\.0\s*\)", text)
+    assert not fabrication, (
+        f"Found {len(fabrication)} value_or(1000.0) fabricated fill(s) in CryptoTradingScreen.cpp. "
+        "Paper market orders must reject when no valid quote is available."
+    )
+
+
+def test_crypto_market_order_rejects_without_quote():
+    """CryptoTradingScreen.cpp must throw/reject a paper market order when ticker.last <= 0."""
+    text = CRYPTO_SOURCE.read_text()
+    assert "ticker.last <= 0" in text or "ticker.last > 0" in text, (
+        "CryptoTradingScreen.cpp must explicitly guard the paper market order path "
+        "against a missing or zero quote."
+    )
+    # The guard must result in an error/rejection, not a fallback price.
+    # Confirm that a rejection message mentioning 'price snapshot' is present.
+    assert "price snapshot" in text, (
+        "CryptoTradingScreen.cpp must surface a clear rejection message when no live "
+        "price snapshot is available for a paper market order."
+    )
