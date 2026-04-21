@@ -12,11 +12,7 @@
 
 namespace fincept::screens::widgets {
 
-// Demo holdings if no DB portfolio exists
-static const QVector<PortfolioSummaryWidget::Holding> kDemoHoldings = {
-    {"AAPL", 10.0, 178.50}, {"MSFT", 5.0, 415.00}, {"NVDA", 8.0, 880.00},
-    {"GOOGL", 3.0, 165.00}, {"TSLA", 6.0, 210.00}, {"SPY", 12.0, 520.00},
-};
+
 
 PortfolioSummaryWidget::PortfolioSummaryWidget(QWidget* parent)
     : BaseWidget("PORTFOLIO SUMMARY", parent, ui::colors::POSITIVE) {
@@ -141,9 +137,11 @@ void PortfolioSummaryWidget::load_holdings() {
         }
     }
 
-    // Fall back to demo portfolio
+    // No holdings found — show an empty-state prompt instead of fabricated demo data.
     if (holdings.isEmpty()) {
-        holdings = kDemoHoldings;
+        set_loading(false);
+        set_error("No portfolio found.\nCreate a portfolio in the Portfolio screen to track your holdings here.");
+        return;
     }
 
     fetch_prices(holdings);

@@ -1,5 +1,9 @@
 #include "services/prediction/polymarket/PolymarketAdapter.h"
 
+// [PARTIAL / EXPERIMENTAL] PolymarketAdapter
+// Not all Polymarket API paths are implemented. Unimplemented calls invoke
+// stub_unsupported() which emits an error signal. Do not expose as live-ready.
+
 #include "core/logging/Logger.h"
 #include "python/PythonRunner.h"
 #include "services/polymarket/PolymarketService.h"

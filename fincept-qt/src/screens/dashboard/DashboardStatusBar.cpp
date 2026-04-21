@@ -54,7 +54,7 @@ DashboardStatusBar::DashboardStatusBar(QWidget* parent) : QWidget(parent) {
     ll->setContentsMargins(0, 0, 0, 0);
     ll->setSpacing(8);
 
-    ll->addWidget(make_lbl("v4.0.0", "dsVersion"));
+    ll->addWidget(make_lbl("v4.0.2", "dsVersion"));
     ll->addWidget(make_sep());
 
     const char* feed_names[] = {"EQ", "FX", "CM", "FI", "CR"};

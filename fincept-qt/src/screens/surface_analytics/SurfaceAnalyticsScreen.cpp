@@ -342,6 +342,9 @@ void SurfaceAnalyticsScreen::refresh_surface_bar() {
 
 // ── Data loading ─────────────────────────────────────────────────────────────
 void SurfaceAnalyticsScreen::load_demo_data() {
+    // DEMO DATA — This function populates the surface with synthetic generated values.
+    // It is called when no live market-data source is connected.
+    // Do not present this as live volatility surface data.
     const char* sym = VOL_SYMBOLS[selected_symbol_];
     float spot = VOL_SPOTS[selected_symbol_];
 

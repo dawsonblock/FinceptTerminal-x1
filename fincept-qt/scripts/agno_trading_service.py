@@ -258,7 +258,16 @@ def load_competition_from_db(competition_id: str) -> Optional[CompetitionRuntime
                 portfolio.cash = state["capital"]
                 portfolio.trades_count = state["trades_count"]
                 portfolio.total_realized_pnl = state["total_pnl"]
-                # TODO: Restore positions from state["positions"]
+                # NOTE: Position objects are not restored from state on reload.
+                # The competition resumes with correct capital and P&L but with
+                # an empty in-memory positions map. Trades that were open at save
+                # time will not appear in the positions list until new trades are placed.
+                print(
+                    f"[WARNING] Competition {competition_id}: positions were not restored from "
+                    "saved state. Open positions from the previous session are unavailable. "
+                    "Capital and P&L totals are correct.",
+                    file=sys.stderr,
+                )
 
         print(f"[INFO] Loaded competition {competition_id} from database", file=sys.stderr)
         return competition

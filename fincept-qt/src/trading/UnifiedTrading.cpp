@@ -95,7 +95,16 @@ UnifiedOrderResponse UnifiedTrading::place_paper_order(const TradingSession& ses
 
     std::optional<double> price_opt;
     if (order.order_type == OrderType::Market) {
-        price_opt = 1000.0;
+        if (order.market_price <= 0.0) {
+            LOG_WARN("UnifiedTrading",
+                     "Market order rejected: no market_price supplied for symbol "
+                     + symbol + ". Paper fills require a real quote snapshot.");
+            return {false, "",
+                    "Paper market order rejected: market_price must be supplied (> 0) "
+                    "to avoid fabricated fills. Provide a live quote before submitting.",
+                    "paper"};
+        }
+        price_opt = order.market_price;
     } else if (order.price > 0) {
         price_opt = order.price;
     }
@@ -109,8 +118,8 @@ UnifiedOrderResponse UnifiedTrading::place_paper_order(const TradingSession& ses
                                           price_opt, stop_opt, false);
 
         if (order.order_type == OrderType::Market) {
-            double fill_price = order.price > 0 ? order.price : 1000.0;
-            pt_fill_order(paper_order.id, fill_price);
+            // market_price already validated above; price_opt holds it
+            pt_fill_order(paper_order.id, *price_opt);
         }
 
         return {true, paper_order.id, "Paper order placed", "paper"};
@@ -225,10 +234,20 @@ UnifiedOrderResponse UnifiedTrading::place_paper_order_for_account(const QString
     QString type_str = order_type_str(order.order_type);
 
     std::optional<double> price_opt;
-    if (order.order_type == OrderType::Market)
-        price_opt = 1000.0;
-    else if (order.price > 0)
+    if (order.order_type == OrderType::Market) {
+        if (order.market_price <= 0.0) {
+            LOG_WARN("UnifiedTrading",
+                     "Market order rejected: no market_price supplied for symbol "
+                     + symbol + ". Paper fills require a real quote snapshot.");
+            return {false, "",
+                    "Paper market order rejected: market_price must be supplied (> 0) "
+                    "to avoid fabricated fills. Provide a live quote before submitting.",
+                    "paper"};
+        }
+        price_opt = order.market_price;
+    } else if (order.price > 0) {
         price_opt = order.price;
+    }
 
     std::optional<double> stop_opt;
     if (order.stop_price > 0)
@@ -238,8 +257,8 @@ UnifiedOrderResponse UnifiedTrading::place_paper_order_for_account(const QString
         auto paper_order = pt_place_order(account.paper_portfolio_id, symbol, side_str, type_str, order.quantity,
                                           price_opt, stop_opt, false);
         if (order.order_type == OrderType::Market) {
-            double fill_price = order.price > 0 ? order.price : 1000.0;
-            pt_fill_order(paper_order.id, fill_price);
+            // market_price already validated above; price_opt holds it
+            pt_fill_order(paper_order.id, *price_opt);
         }
         return {true, paper_order.id, "Paper order placed", "paper"};
     } catch (const std::exception& e) {

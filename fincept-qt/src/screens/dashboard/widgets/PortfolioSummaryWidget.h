@@ -11,8 +11,9 @@
 namespace fincept::screens::widgets {
 
 /// Portfolio Summary Widget — reads holdings from SQLite (portfolio table),
-/// fetches live prices via yfinance, computes P&L and portfolio value.
-/// Falls back to a demo portfolio if no DB holdings are found.
+/// subscribes to live quotes from the DataHub, and computes P&L and
+/// portfolio value.
+/// Displays an empty-state prompt when no portfolio holdings exist in the database.
 ///
 /// Once `load_holdings()` produces the holdings set the widget subscribes
 /// to `market:quote:<sym>` on the DataHub for each holding. Any change to

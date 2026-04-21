@@ -1,3 +1,6 @@
+// UnifiedTrading — order routing layer.
+// NOTE: UnifiedOrder::market_price must be > 0 for paper market orders
+// (see TradingTypes.h for the struct definition; see UnifiedTrading.cpp for enforcement).
 #pragma once
 // Unified Trading — routes orders to live broker or paper trading engine
 

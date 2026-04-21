@@ -69,7 +69,7 @@ std::vector<ToolDef> get_system_tools() {
         t.category = "system";
         t.handler = [](const QJsonObject&) -> ToolResult {
             return ToolResult::ok_data(
-                QJsonObject{{"version", "4.0.0"},
+                QJsonObject{{"version", "4.0.2"},
                             {"platform",
 #ifdef _WIN32
                              "windows"
