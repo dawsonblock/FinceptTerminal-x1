@@ -42,6 +42,7 @@ non-harmless finding.
 | 14 | `screens/dashboard/widgets/PortfolioSummaryWidget.h` | 15 | Comment "Falls back to a demo portfolio if no DB holdings are found" | **release-blocker** | **PATCHED** alongside row 4 — updated to accurate description. |
 | 15 | `screens/dashboard/canvas/PlaceholderOverlay.h`, `DockScreenRouter.cpp` | various | "lightweight placeholder" for lazily-loaded screens | **harmless** | Standard Qt lazy-loading pattern; not synthetic data. |
 | 16 | Various `screens/portfolio/views/*.cpp` | various | `make_placeholder(...)` / `QStackedWidget` with page-0 placeholder labels | **harmless** | These are empty-state prompts ("Run optimization to generate results") shown before the user runs an analysis. They do not display fabricated data. |
+| 17 | `screens/crypto_trading/CryptoTradingScreen.cpp` | 785, 795 | `ticker.last > 0 ? ticker.last : 1000.0` and `price_opt.value_or(1000.0)` — paper market order fabricated fill price | **release-blocker** | **PATCHED** — removed both magic-constant fallbacks; when `ticker.last <= 0` the order now throws with `"No valid market quote… paper market order requires a live price snapshot"` instead of filling at an invented price. |
 
 ---
 
@@ -49,11 +50,11 @@ non-harmless finding.
 
 | # | File | Line | Pattern | Class | Resolution |
 |---|------|------|---------|-------|------------|
-| 17 | `agno_trading_service.py` | ~261 | `# TODO: Restore positions from state["positions"]` — competition reload silently skips re-hydrating open positions | **user-visible risk** | **PATCHED** — replaced TODO with an explicit `print("[WARNING] Competition …: positions were not restored …", file=sys.stderr)` that describes exactly what state was lost and what is still correct |
-| 18 | `exchange/broker_ws_bridge.py` | 320–335 | `_make_stub(name)` creates stub Python modules for `database.auth_db`, `database.token_db`, etc. | **harmless** | This is intentional module isolation for the WebSocket bridge process; it does not fabricate financial data. |
-| 19 | `prediction_kalshi.py` | 21, 71–72 | `use_demo: false` default and `_base_url()` switching between demo-api and prod-api | **harmless** | Explicit user-controlled flag routing to Kalshi's official demo environment; not fabricated data. |
-| 20 | Strategy files (`scripts/strategies/*.py`) | various | `placeholder`, `TODO`, `demo` in QuantConnect strategy templates | **harmless** | These are standard QuantConnect template algorithms copied as reference strategies. They are not executed by the app's core trading path. |
-| 21 | Analytics scripts (`scripts/Analytics/**/*.py`) | various | `TODO`, `placeholder`, `stub` in quant model implementations | **harmless** | These scripts are invoked via PythonRunner only when the user navigates to quant lab features. All partial paths raise exceptions or return empty results rather than fabricating output. |
+| 18 | `agno_trading_service.py` | ~261 | `# TODO: Restore positions from state["positions"]` — competition reload silently skips re-hydrating open positions | **user-visible risk** | **PATCHED** — replaced TODO with an explicit `print("[WARNING] Competition …: positions were not restored …", file=sys.stderr)` that describes exactly what state was lost and what is still correct |
+| 19 | `exchange/broker_ws_bridge.py` | 320–335 | `_make_stub(name)` creates stub Python modules for `database.auth_db`, `database.token_db`, etc. | **harmless** | This is intentional module isolation for the WebSocket bridge process; it does not fabricate financial data. |
+| 20 | `prediction_kalshi.py` | 21, 71–72 | `use_demo: false` default and `_base_url()` switching between demo-api and prod-api | **harmless** | Explicit user-controlled flag routing to Kalshi's official demo environment; not fabricated data. |
+| 21 | Strategy files (`scripts/strategies/*.py`) | various | `placeholder`, `TODO`, `demo` in QuantConnect strategy templates | **harmless** | These are standard QuantConnect template algorithms copied as reference strategies. They are not executed by the app's core trading path. |
+| 22 | Analytics scripts (`scripts/Analytics/**/*.py`) | various | `TODO`, `placeholder`, `stub` in quant model implementations | **harmless** | These scripts are invoked via PythonRunner only when the user navigates to quant lab features. All partial paths raise exceptions or return empty results rather than fabricating output. |
 
 ---
 
@@ -68,6 +69,7 @@ non-harmless finding.
 | `fincept-qt/src/screens/markets/MarketPanel.cpp` | Converted `// TODO: wire volume` to non-TODO comment |
 | `fincept-qt/src/storage/secure/SecureStorage.cpp` | Converted `// TODO` to `// KNOWN LIMITATION (Linux)` |
 | `fincept-qt/scripts/agno_trading_service.py` | Replaced silent `# TODO` with explicit `[WARNING]` log |
+| `fincept-qt/src/screens/crypto_trading/CryptoTradingScreen.cpp` | Removed `ticker.last > 0 ? ticker.last : 1000.0` and `price_opt.value_or(1000.0)` fabricated fills; market order now throws when `ticker.last <= 0` |
 | `tests/test_honesty_ci.py` | **New** — 7 CI tests that enforce all critical honesty rules |
 
 ---
@@ -86,10 +88,28 @@ The file `tests/test_honesty_ci.py` adds 7 automated tests that will **fail the 
 | `test_agno_trading_position_restore_warned` | Silent position-restore skip without warning |
 | `test_no_todo_error_strings_in_screens` | Raw `"TODO"` return values in user-facing screen code |
 
+`tests/test_no_fabricated_price.py` enforces the no-fabrication rule for all paper-trading paths:
+
+| Test | What it blocks |
+|------|----------------|
+| `test_no_magic_1000_fill` | `price_opt = 1000.0` assignments in `UnifiedTrading.cpp` |
+| `test_market_price_field_in_header` | Missing `market_price` field in `UnifiedOrder` struct |
+| `test_rejection_message_present` | Missing rejection message in `UnifiedTrading.cpp` |
+| `test_crypto_no_magic_1000_fallback` | `: 1000.0` ternary fallbacks in `CryptoTradingScreen.cpp` |
+| `test_crypto_no_value_or_fabrication` | `value_or(1000.0)` fabricated fills in `CryptoTradingScreen.cpp` |
+| `test_crypto_market_order_rejects_without_quote` | Missing quote-guard and rejection message in `CryptoTradingScreen.cpp` |
+
+`tests/test_requirements_split.py` enforces the dependency tier wiring:
+
+| Test | What it blocks |
+|------|----------------|
+| `test_setup_manager_uses_core_tier_file` | `PythonSetupManager.cpp` using legacy `requirements-numpy2.txt` instead of `requirements-core.txt` |
+| `test_setup_manager_uses_quant_tier_file` | `PythonSetupManager.cpp` using legacy `requirements-numpy1.txt` instead of `requirements-optional-quant.txt` |
+
 Run all tests with:
 ```bash
 python -m pytest tests/ -v
-# Expected: 26 passed
+# Expected: 30 passed, 1 skipped
 ```
 
 ---

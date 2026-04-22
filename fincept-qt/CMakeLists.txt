@@ -1903,11 +1903,14 @@ add_custom_command(TARGET FinceptTerminal POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory
         "$<TARGET_FILE_DIR:FinceptTerminal>/resources"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_CURRENT_SOURCE_DIR}/resources/requirements-numpy1.txt"
-        "$<TARGET_FILE_DIR:FinceptTerminal>/resources/requirements-numpy1.txt"
+        "${CMAKE_CURRENT_SOURCE_DIR}/resources/requirements-core.txt"
+        "$<TARGET_FILE_DIR:FinceptTerminal>/resources/requirements-core.txt"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_CURRENT_SOURCE_DIR}/resources/requirements-numpy2.txt"
-        "$<TARGET_FILE_DIR:FinceptTerminal>/resources/requirements-numpy2.txt"
+        "${CMAKE_CURRENT_SOURCE_DIR}/resources/requirements-optional-ai.txt"
+        "$<TARGET_FILE_DIR:FinceptTerminal>/resources/requirements-optional-ai.txt"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/resources/requirements-optional-quant.txt"
+        "$<TARGET_FILE_DIR:FinceptTerminal>/resources/requirements-optional-quant.txt"
     COMMENT "Copying requirements files to build output..."
 )
 
@@ -1973,8 +1976,9 @@ if(WIN32)
     # Python packages. Must be deployed beside the exe so find_requirements_file()
     # can locate them at C:/Program Files/FinceptTerminal/resources/*.txt.
     install(FILES
-            "${CMAKE_CURRENT_SOURCE_DIR}/resources/requirements-numpy1.txt"
-            "${CMAKE_CURRENT_SOURCE_DIR}/resources/requirements-numpy2.txt"
+            "${CMAKE_CURRENT_SOURCE_DIR}/resources/requirements-core.txt"
+            "${CMAKE_CURRENT_SOURCE_DIR}/resources/requirements-optional-ai.txt"
+            "${CMAKE_CURRENT_SOURCE_DIR}/resources/requirements-optional-quant.txt"
             DESTINATION "resources" COMPONENT core)
 
 elseif(APPLE)
@@ -1982,8 +1986,9 @@ elseif(APPLE)
     install(TARGETS FinceptTerminal BUNDLE DESTINATION "." COMPONENT core)
     # Requirements files — deployed beside the .app so PythonSetupManager finds them
     install(FILES
-            "${CMAKE_CURRENT_SOURCE_DIR}/resources/requirements-numpy1.txt"
-            "${CMAKE_CURRENT_SOURCE_DIR}/resources/requirements-numpy2.txt"
+            "${CMAKE_CURRENT_SOURCE_DIR}/resources/requirements-core.txt"
+            "${CMAKE_CURRENT_SOURCE_DIR}/resources/requirements-optional-ai.txt"
+            "${CMAKE_CURRENT_SOURCE_DIR}/resources/requirements-optional-quant.txt"
             DESTINATION "FinceptTerminal.app/Contents/Resources/resources" COMPONENT core)
 
 else()

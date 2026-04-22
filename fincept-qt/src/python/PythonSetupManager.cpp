@@ -278,21 +278,21 @@ SetupStatus PythonSetupManager::check_status() const {
     // ── Compute current requirements hashes ───────────────────────────────────
     // If a file is not found the hash is empty — treated as "not current",
     // which forces reinstall (correct) rather than silently skipping.
-    const QString req_hash1 = compute_requirements_hash("requirements-numpy1.txt");
-    const QString req_hash2 = compute_requirements_hash("requirements-numpy2.txt");
+    const QString req_hash1 = compute_requirements_hash("requirements-optional-quant.txt");
+    const QString req_hash2 = compute_requirements_hash("requirements-core.txt");
 
     LOG_INFO("PythonSetup",
-             QString("Requirements hashes — numpy1: %1  numpy2: %2")
+             QString("Requirements hashes — quant: %1  core: %2")
                  .arg(req_hash1.isEmpty() ? "(file not found)" : req_hash1.left(16) + "...")
                  .arg(req_hash2.isEmpty() ? "(file not found)" : req_hash2.left(16) + "..."));
 
     if (req_hash1.isEmpty())
         LOG_WARN("PythonSetup",
-                 "requirements-numpy1.txt NOT FOUND — find_requirements_file() returned empty. "
+                 "requirements-optional-quant.txt NOT FOUND — find_requirements_file() returned empty. "
                  "Check that resources/ folder is deployed beside the exe.");
     if (req_hash2.isEmpty())
         LOG_WARN("PythonSetup",
-                 "requirements-numpy2.txt NOT FOUND — find_requirements_file() returned empty. "
+                 "requirements-core.txt NOT FOUND — find_requirements_file() returned empty. "
                  "Check that resources/ folder is deployed beside the exe.");
 
     // A venv is "ready" only when its marker content equals the current hash.
@@ -414,7 +414,7 @@ SetupStatus PythonSetupManager::check_status() const {
     // use the fast path.  If it fails we leave needs_setup=true → full install.
     if (status.venv_numpy1_created && !pkg1_current) {
         LOG_INFO("PythonSetup", "venv-numpy1: marker stale/absent — running uv pip list verification");
-        if (!req_hash1.isEmpty() && verify_packages_installed("venv-numpy1", "requirements-numpy1.txt")) {
+        if (!req_hash1.isEmpty() && verify_packages_installed("venv-numpy1", "requirements-optional-quant.txt")) {
             write_marker_hash("venv-numpy1", req_hash1);
             status.venv_numpy1_ready = true;
             LOG_INFO("PythonSetup", "venv-numpy1: verification passed — marker written");
@@ -428,7 +428,7 @@ SetupStatus PythonSetupManager::check_status() const {
 
     if (status.venv_numpy2_created && !pkg2_current) {
         LOG_INFO("PythonSetup", "venv-numpy2: marker stale/absent — running uv pip list verification");
-        if (!req_hash2.isEmpty() && verify_packages_installed("venv-numpy2", "requirements-numpy2.txt")) {
+        if (!req_hash2.isEmpty() && verify_packages_installed("venv-numpy2", "requirements-core.txt")) {
             write_marker_hash("venv-numpy2", req_hash2);
             status.venv_numpy2_ready = true;
             LOG_INFO("PythonSetup", "venv-numpy2: verification passed — marker written");
@@ -564,34 +564,34 @@ void PythonSetupManager::run_setup() {
         std::atomic<bool> p2_ok{!need_pkg2};
 
         if (need_pkg1) {
-            self->emit_progress("packages-numpy1", 0, "Installing NumPy 1.x packages...");
+            self->emit_progress("packages-numpy1", 0, "Installing Quant pack packages...");
         } else {
-            self->emit_progress("packages-numpy1", 100, "NumPy 1.x packages ready");
+            self->emit_progress("packages-numpy1", 100, "Quant pack packages ready");
         }
         if (need_pkg2) {
-            self->emit_progress("packages-numpy2", 0, "Installing NumPy 2.x packages...");
+            self->emit_progress("packages-numpy2", 0, "Installing Core packages...");
         } else {
-            self->emit_progress("packages-numpy2", 100, "NumPy 2.x packages ready");
+            self->emit_progress("packages-numpy2", 100, "Core packages ready");
         }
 
         // Run both package installations in parallel
         QFuture<void> pf1, pf2;
         if (need_pkg1) {
             pf1 = QtConcurrent::run([self, &p1_ok]() {
-                p1_ok = self && self->install_packages("venv-numpy1", "requirements-numpy1.txt");
+                p1_ok = self && self->install_packages("venv-numpy1", "requirements-optional-quant.txt");
                 if (self) {
                     self->emit_progress("packages-numpy1", p1_ok ? 100 : 0,
-                                        p1_ok ? "NumPy 1.x packages installed" : "NumPy 1.x package install failed",
+                                        p1_ok ? "Quant pack packages installed" : "Quant pack install failed",
                                         !p1_ok);
                 }
             });
         }
         if (need_pkg2) {
             pf2 = QtConcurrent::run([self, &p2_ok]() {
-                p2_ok = self && self->install_packages("venv-numpy2", "requirements-numpy2.txt");
+                p2_ok = self && self->install_packages("venv-numpy2", "requirements-core.txt");
                 if (self) {
                     self->emit_progress("packages-numpy2", p2_ok ? 100 : 0,
-                                        p2_ok ? "NumPy 2.x packages installed" : "NumPy 2.x package install failed",
+                                        p2_ok ? "Core packages installed" : "Core package install failed",
                                         !p2_ok);
                 }
             });

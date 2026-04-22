@@ -425,8 +425,8 @@ void PythonEnvSection::load_packages() {
     pkg_table_->setRowCount(0);
     show_status("Loading...");
 
-    parse_requirements("requirements-numpy1.txt", "venv-numpy1", "Trading");
-    parse_requirements("requirements-numpy2.txt", "venv-numpy2", "Analytics");
+    parse_requirements("requirements-optional-quant.txt", "venv-numpy1", "Quant");
+    parse_requirements("requirements-core.txt", "venv-numpy2", "Core");
 
     LOG_INFO("PythonEnv",
              QString("Parsed %1 packages from requirements files").arg(all_packages_.size()));

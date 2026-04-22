@@ -781,9 +781,14 @@ void CryptoTradingScreen::on_order_submitted(const QString& side, const QString&
         if (trading_mode_ == TradingMode::Paper) {
             auto ticker = ExchangeService::instance().get_cached_price(selected_symbol_);
             std::optional<double> price_opt;
-            if (order_type == "market")
-                price_opt = ticker.last > 0 ? ticker.last : 1000.0;
-            else if (price > 0)
+            if (order_type == "market") {
+                if (ticker.last <= 0)
+                    throw std::runtime_error(
+                        "No valid market quote for " + selected_symbol_.toStdString() +
+                        " — paper market order requires a live price snapshot. "
+                        "Wait for a quote or place a limit order instead.");
+                price_opt = ticker.last;
+            } else if (price > 0)
                 price_opt = price;
 
             std::optional<double> stop_opt;
@@ -792,7 +797,7 @@ void CryptoTradingScreen::on_order_submitted(const QString& side, const QString&
 
             auto order = pt_place_order(portfolio_id_, selected_symbol_, side, order_type, qty, price_opt, stop_opt);
             if (order_type == "market") {
-                double fill = ticker.last > 0 ? ticker.last : price_opt.value_or(1000.0);
+                double fill = ticker.last; // already validated > 0 above
                 pt_fill_order(order.id, fill);
             } else {
                 OrderMatcher::instance().add_order(order);
